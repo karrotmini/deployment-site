@@ -1,0 +1,58 @@
+name: 'Karrotmini Site Deployment'
+description: 'Deployment GitHub Actions to karrotmini-site'
+inputs:
+  api-key:
+    description: 'API Key'
+    required: true
+  build-output-directory:
+    description: 'The build output directory of where to zip.'
+    required: true
+  preview-id:
+    description: 'Unique preview id for the deployment'
+    required: true
+
+outputs:
+  site-url:
+    description: "OUTPUT 1"
+    value: ${{ steps.zip-and-upload.outputs.site-url }}
+  karrot-deeplink-url:
+    description: "OUTPUT 2"
+    value: ${{ steps.zip-and-upload.outputs.karrot-deeplink-url }}
+runs:
+  using: "composite"
+  steps:
+    - id: zip-and-upload
+      name: Zip and Upload
+      run: |
+        ARCHIVE_FILE_PATH=$(mktemp -d)/Archive.zip
+        zip -r $ARCHIVE_FILE_PATH ${{ inputs.build-output-directory }}
+        RESULT=$(curl --location --request POST \
+          'https://mini.kr.karrotmarket.com/console/miniapps/bundle/upload-preview' \
+          --header 'Authorization: ${{ inputs.api-key }}' \
+          --form 'file=@"$ARCHIVE_FILE_PATH"' \
+          --form 'preview_id="${{ github.preview-id }}"')
+        echo "site-url=$(echo $RESULT | jq --raw-output .site_url) >> $GITHUB_OUTPUT
+        echo "karrot-deeplink-url=$(echo $RESULT | jq --raw-output .karrot_deeplink_url) >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: Find Comment
+      if: ${{ github.event_name == 'pull_request' }}
+      uses: peter-evans/find-comment@v1
+      id: fc
+      with:
+        issue-number: ${{ github.event.pull_request.number }}
+        comment-author: 'karrotmini'
+        body-includes: karrotmini deployment result
+
+    - name: Upsert Result
+      if: ${{ github.event_name == 'pull_request' }}
+      uses: peter-evans/create-or-update-comment@v1
+      with:
+        comment-id: ${{ steps.fc.outputs.comment-id }}
+        issue-number: ${{ github.event.pull_request.number }}
+        body: |
+          ## karrotmini deployment result
+
+          ${{ steps.zip-and-upload.outputs.site-url }}
+          ${{ steps.zip-and-upload.outputs.karrot-deeplink-url }}
+        edit-mode: replace
