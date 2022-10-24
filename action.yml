@@ -36,7 +36,7 @@ runs:
         echo "karrot-deeplink-url=$(echo $RESULT | jq --raw-output .karrot_deeplink_url)" >> $GITHUB_OUTPUT
       shell: bash
 
-    - uses: snow-actions/qrcode@v1
+    - uses: snow-actions/qrcode@v1.0.0
       with:
         text: ${{ steps.zip-and-upload.outputs.karrot-deeplink-url }}
         path: qrcode.png
