@@ -10,13 +10,12 @@ inputs:
   preview-id:
     description: 'Unique preview id for the deployment'
     required: true
-
 outputs:
   site-url:
-    description: "OUTPUT 1"
+    description: "Public accessable site preview url"
     value: ${{ steps.zip-and-upload.outputs.site-url }}
   karrot-deeplink-url:
-    description: "OUTPUT 2"
+    description: "Deeplink URL via karrotmarket application"
     value: ${{ steps.zip-and-upload.outputs.karrot-deeplink-url }}
 runs:
   using: "composite"
@@ -45,14 +44,15 @@ runs:
         comment-author: 'github-actions[bot]'
         body-includes: karrotmini deployment result
 
-    - uses: kentaro-m/qr-code-commenter-action@v0.1.2
-      if: steps.fc.outputs.comment-id == ''
+    - name: Upsert Result
+      if: ${{ github.event_name == 'pull_request' }}
+      uses: peter-evans/create-or-update-comment@v2
       with:
-        repo-token: ${{ github.token }}
-        content: ${{ steps.zip-and-upload.outputs.karrot-deeplink-url }}
-        comment: |
-          karrotmini deployment result
+        comment-id: ${{ steps.fc.outputs.comment-id }}
+        issue-number: ${{ github.event.pull_request.number }}
+        body: |
+          ## karrotmini deployment result
 
           ${{ steps.zip-and-upload.outputs.site-url }}
-          Scan a code with your device.
-          {qrcode}
+          ${{ steps.zip-and-upload.outputs.karrot-deeplink-url }}
+        edit-mode: replace
