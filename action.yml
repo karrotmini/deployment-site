@@ -32,8 +32,8 @@ runs:
           --form "file=@$ARCHIVE_FILE_PATH" \
           --form 'preview_id="${{ inputs.preview-id }}"')
         echo $RESULT
-        echo "site-url=$(echo $RESULT | jq --raw-output .site_url) >> $GITHUB_OUTPUT
-        echo "karrot-deeplink-url=$(echo $RESULT | jq --raw-output .karrot_deeplink_url) >> $GITHUB_OUTPUT
+        echo "site-url=$(echo $RESULT | jq --raw-output .site_url)" >> $GITHUB_OUTPUT
+        echo "karrot-deeplink-url=$(echo $RESULT | jq --raw-output .karrot_deeplink_url)" >> $GITHUB_OUTPUT
       shell: bash
 
     - name: Find Comment
