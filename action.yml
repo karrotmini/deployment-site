@@ -24,7 +24,7 @@ runs:
     - id: zip-and-upload
       name: Zip and Upload
       run: |
-        ARCHIVE_FILE_PATH=$(mktemp -d)/Archive.zip
+        ARCHIVE_FILE_PATH=$(mktemp -d)/${{ inputs.build-output-directory }}.zip
         zip -r $ARCHIVE_FILE_PATH ${{ inputs.build-output-directory }}
         RESULT=$(curl --location --request POST \
           'https://mini.kr.karrotmarket.com/console/miniapps/bundle/upload-preview' \
