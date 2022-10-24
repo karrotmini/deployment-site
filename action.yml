@@ -28,7 +28,7 @@ runs:
         zip -r $ARCHIVE_FILE_PATH ${{ inputs.build-output-directory }}
         RESULT=$(curl --location --request POST \
           'https://mini.kr.karrotmarket.com/console/miniapps/bundle/upload-preview' \
-          --header 'Authorization: ${{ inputs.api-key }}' \
+          --header 'X-Api-Key: ${{ inputs.api-key }}' \
           --form "file=@$ARCHIVE_FILE_PATH" \
           --form 'preview_id="${{ inputs.preview-id }}"')
         echo $RESULT
