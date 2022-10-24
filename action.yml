@@ -29,8 +29,8 @@ runs:
         RESULT=$(curl --location --request POST \
           'https://mini.kr.karrotmarket.com/console/miniapps/bundle/upload-preview' \
           --header 'Authorization: ${{ inputs.api-key }}' \
-          --form 'file=@"$ARCHIVE_FILE_PATH"' \
-          --form 'preview_id="${{ github.preview-id }}"')
+          --form "file=@$ARCHIVE_FILE_PATH" \
+          --form 'preview_id="${{ inputs.preview-id }}"')
         echo "site-url=$(echo $RESULT | jq --raw-output .site_url) >> $GITHUB_OUTPUT
         echo "karrot-deeplink-url=$(echo $RESULT | jq --raw-output .karrot_deeplink_url) >> $GITHUB_OUTPUT
       shell: bash
