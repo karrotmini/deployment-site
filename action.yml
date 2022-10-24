@@ -59,7 +59,10 @@ runs:
         body: |
           ## karrotmini deployment result
 
-          ${{ steps.zip-and-upload.outputs.site-url }}
-          ${{ steps.zip-and-upload.outputs.karrot-deeplink-url }}
-          <img src="https://api.qrcode-monkey.com//qr/custom?download=false&file=svg&data=${{ steps.encoded-karrot-deeplink-url.outputs.result }}&size=550" />
+          Preview Site URL: ${{ steps.zip-and-upload.outputs.site-url }}
+
+          <!-- See https://www.qrcode-monkey.com/qr-code-api-with-logo/ -->
+          Scan a code with your device.
+          <img src="https://api.qrcode-monkey.com/qr/custom?download=false&file=svg&data=${{ steps.encoded-karrot-deeplink-url.outputs.result }}&config=%7B%22logo%22%3A%22e57fa33bd90ef3e110ef7d6ca5e10f9139ef311b.png%22%7D" />
+          (Deeplink URL ${{ steps.zip-and-upload.outputs.karrot-deeplink-url }})
         edit-mode: replace
