@@ -27,9 +27,7 @@ runs:
 
     - name: Zip build output
       run: |
-        ls -al
         zip -r $ARCHIVE_FILE_PATH ./
-        ls -al $ARCHIVE_FILE_PATH
       shell: bash
       working-directory: ${{ inputs.build-output-directory }}
       env:
