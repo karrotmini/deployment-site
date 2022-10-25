@@ -27,7 +27,9 @@ runs:
 
     - name: Zip build output
       run: |
+        ls -al
         zip -r $ARCHIVE_FILE_PATH ./
+        ls -al $ARCHIVE_FILE_PATH
       shell: bash
       working-directory: ${{ inputs.build-output-directory }}
       env:
@@ -42,8 +44,8 @@ runs:
           --form "file=@$ARCHIVE_FILE_PATH" \
           --form 'preview_id="${{ inputs.preview-id }}"')
         echo $RESULT
-        echo "site-url=$(echo $RESULT | jq --raw-output .site_url)" >> $GITHUB_OUTPUT
-        echo "karrot-deeplink-url=$(echo $RESULT | jq --raw-output .karrot_deeplink_url)" >> $GITHUB_OUTPUT
+        echo "site-url=$(echo $RESULT | jq -e --raw-output .site_url)" >> $GITHUB_OUTPUT
+        echo "karrot-deeplink-url=$(echo $RESULT | jq -e --raw-output .karrot_deeplink_url)" >> $GITHUB_OUTPUT
       shell: bash
       env:
         ARCHIVE_FILE_PATH: ${{ steps.archive-file-path.outputs.result }}
