@@ -1,0 +1,85 @@
+name: 'Karrotmini Site Deployment'
+description: 'Deployment GitHub Actions to karrotmini-site'
+inputs:
+  api-key:
+    description: 'API Key'
+    required: true
+  build-output-directory:
+    description: 'The build output directory of where to zip.'
+    required: true
+  preview-id:
+    description: 'Unique preview id for the deployment'
+    required: true
+outputs:
+  site-url:
+    description: "Public accessable site preview url"
+    value: ${{ steps.upload.outputs.site-url }}
+  karrot-deeplink-url:
+    description: "Deeplink URL via karrotmarket application"
+    value: ${{ steps.upload.outputs.karrot-deeplink-url }}
+runs:
+  using: "composite"
+  steps:
+    - id: archive-file-path
+      run: |
+        echo "result=$(mktemp -d)/Archive.zip" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: Zip build output
+      run: |
+        zip -r $ARCHIVE_FILE_PATH ./
+      shell: bash
+      working-directory: ${{ inputs.build-output-directory }}
+      env:
+        ARCHIVE_FILE_PATH: ${{ steps.archive-file-path.outputs.result }}
+
+    - id: upload
+      name: Upload archived build output
+      run: |
+        RESULT=$(curl --silent --location --request POST \
+          'https://mini.kr.karrotmarket.com/console/miniapps/bundle/upload-preview' \
+          --header 'X-Api-Key: ${{ inputs.api-key }}' \
+          --form "file=@$ARCHIVE_FILE_PATH" \
+          --form 'preview_id="${{ inputs.preview-id }}"')
+        echo $RESULT
+
+        if [ $(echo $RESULT | jq empty > /dev/null 2>&1; echo $?) -ne 0 ]; then
+          exit 1
+        fi
+
+        echo "site-url=$(echo $RESULT | jq -e --raw-output .site_url)" >> $GITHUB_OUTPUT
+        echo "karrot-deeplink-url=$(echo $RESULT | jq -e --raw-output .karrot_deeplink_url)" >> $GITHUB_OUTPUT
+      shell: bash
+      env:
+        ARCHIVE_FILE_PATH: ${{ steps.archive-file-path.outputs.result }}
+
+    - uses: actions/github-script@v6
+      id: encoded-karrot-deeplink-url
+      with:
+        script: return encodeURIComponent("${{ steps.upload.outputs.karrot-deeplink-url }}");
+        result-encoding: string
+
+    - name: Find Comment
+      if: ${{ github.event_name == 'pull_request' }}
+      uses: peter-evans/find-comment@v2
+      id: fc
+      with:
+        issue-number: ${{ github.event.pull_request.number }}
+        comment-author: 'github-actions[bot]'
+        body-includes: karrotmini deployment result
+
+    - name: Upsert Result
+      if: ${{ github.event_name == 'pull_request' }}
+      uses: peter-evans/create-or-update-comment@v2
+      with:
+        comment-id: ${{ steps.fc.outputs.comment-id }}
+        issue-number: ${{ github.event.pull_request.number }}
+        body: |
+          ## karrotmini deployment result
+
+          Preview Site URL: ${{ steps.upload.outputs.site-url }}
+
+          <!-- See https://www.qrcode-monkey.com/qr-code-api-with-logo/ -->
+          Open Preview site on 당근마켓. Scan a code with your device!
+          <img src="https://api.qrcode-monkey.com/qr/custom?download=false&file=svg&data=${{ steps.encoded-karrot-deeplink-url.outputs.result }}&config=%7B%22logo%22%3A%22e57fa33bd90ef3e110ef7d6ca5e10f9139ef311b.png%22%7D" />
+        edit-mode: replace
