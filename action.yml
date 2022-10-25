@@ -13,19 +13,29 @@ inputs:
 outputs:
   site-url:
     description: "Public accessable site preview url"
-    value: ${{ steps.zip-and-upload.outputs.site-url }}
+    value: ${{ steps.upload.outputs.site-url }}
   karrot-deeplink-url:
     description: "Deeplink URL via karrotmarket application"
-    value: ${{ steps.zip-and-upload.outputs.karrot-deeplink-url }}
+    value: ${{ steps.upload.outputs.karrot-deeplink-url }}
 runs:
   using: "composite"
   steps:
-    - id: zip-and-upload
-      name: Zip and Upload
+    - id: archive-file-path
       run: |
-        ARCHIVE_FILE_PATH=$(mktemp -d)/Archive.zip
-        cd ${{ inputs.build-output-directory }}
+        echo "result=$(mktemp -d)/Archive.zip)" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: Zip build output
+      run: |
         zip -r $ARCHIVE_FILE_PATH ./
+      shell: bash
+      working-directory: ${{ inputs.build-output-directory }}
+      env:
+        ARCHIVE_FILE_PATH: ${{ steps.archive-file-path.outputs.result }}
+
+    - id: upload
+      name: Upload archived build output
+      run: |
         RESULT=$(curl --location --request POST \
           'https://mini.kr.karrotmarket.com/console/miniapps/bundle/upload-preview' \
           --header 'X-Api-Key: ${{ inputs.api-key }}' \
@@ -35,11 +45,13 @@ runs:
         echo "site-url=$(echo $RESULT | jq --raw-output .site_url)" >> $GITHUB_OUTPUT
         echo "karrot-deeplink-url=$(echo $RESULT | jq --raw-output .karrot_deeplink_url)" >> $GITHUB_OUTPUT
       shell: bash
+      env:
+        ARCHIVE_FILE_PATH: ${{ steps.archive-file-path.outputs.result }}
 
     - uses: actions/github-script@v6
       id: encoded-karrot-deeplink-url
       with:
-        script: return encodeURIComponent("${{ steps.zip-and-upload.outputs.karrot-deeplink-url }}");
+        script: return encodeURIComponent("${{ steps.upload.outputs.karrot-deeplink-url }}");
         result-encoding: string
 
     - name: Find Comment
@@ -60,7 +72,7 @@ runs:
         body: |
           ## karrotmini deployment result
 
-          Preview Site URL: ${{ steps.zip-and-upload.outputs.site-url }}
+          Preview Site URL: ${{ steps.upload.outputs.site-url }}
 
           <!-- See https://www.qrcode-monkey.com/qr-code-api-with-logo/ -->
           Scan a code with your device.
