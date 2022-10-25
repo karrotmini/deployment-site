@@ -22,7 +22,7 @@ runs:
   steps:
     - id: archive-file-path
       run: |
-        echo "result=$(mktemp -d)/Archive.zip)" >> $GITHUB_OUTPUT
+        echo "result=$(mktemp -d)/Archive.zip" >> $GITHUB_OUTPUT
       shell: bash
 
     - name: Zip build output
