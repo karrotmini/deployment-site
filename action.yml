@@ -74,7 +74,7 @@ runs:
         result-encoding: string
 
     - name: Find Comment
-      if: ${{ github.event_name == 'pull_request' }}
+      if: ${{ github.event_name == 'pull_request' && always() }}
       uses: peter-evans/find-comment@v2
       id: fc
       with:
