@@ -41,7 +41,7 @@ runs:
       name: Upload archived build output
       run: |
         RESULT=$(curl --silent --location --request POST \
-          '{{ inputs.bundle-upload-http-endpoint }}' \
+          '${{ inputs.bundle-upload-http-endpoint }}' \
           --header 'X-Api-Key: ${{ inputs.api-key }}' \
           --form "file=@$ARCHIVE_FILE_PATH" \
           --form 'preview_id="${{ inputs.preview-id }}"')
