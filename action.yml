@@ -5,11 +5,15 @@ inputs:
     description: 'API Key'
     required: true
   build-output-directory:
-    description: 'The build output directory of where to zip.'
+    description: 'The build output directory of where to zip'
     required: true
   preview-id:
     description: 'Unique preview id for the deployment'
     required: true
+  bundle-upload-http-endpoint:
+    description: 'The HTTP endpoint to upload the bundle to'
+    required: false
+    default: 'https://mini.kr.karrotmarket.com/console/miniapps/bundle/upload-preview'
 outputs:
   site-url:
     description: "Public accessable site preview url"
@@ -37,7 +41,7 @@ runs:
       name: Upload archived build output
       run: |
         RESULT=$(curl --silent --location --request POST \
-          'https://mini.kr.karrotmarket.com/console/miniapps/bundle/upload-preview' \
+          '{{ inputs.bundle-upload-http-endpoint }}' \
           --header 'X-Api-Key: ${{ inputs.api-key }}' \
           --form "file=@$ARCHIVE_FILE_PATH" \
           --form 'preview_id="${{ inputs.preview-id }}"')
