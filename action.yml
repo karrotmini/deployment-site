@@ -48,6 +48,16 @@ runs:
         echo $RESULT
 
         if [ $(echo $RESULT | jq empty > /dev/null 2>&1; echo $?) -ne 0 ]; then
+          echo "failure-message=$RESULT" >> $GITHUB_OUTPUT
+          exit 1
+        fi
+
+        if [ $(echo $RESULT | jq 'has("site_url") and has("karrot_deeplink_url")') = false ]; then
+          if [ $(echo $RESULT | jq 'has("message")') = true ]; then
+            echo "failure-message=$(echo $RESULT | jq -e --raw-output .message)" >> $GITHUB_OUTPUT
+          else
+            echo "failure-message=" >> $GITHUB_OUTPUT
+          fi
           exit 1
         fi
 
@@ -72,8 +82,8 @@ runs:
         comment-author: 'github-actions[bot]'
         body-includes: karrotmini deployment result
 
-    - name: Upsert Result
-      if: ${{ github.event_name == 'pull_request' }}
+    - name: Upsert Result (Success)
+      if: ${{ github.event_name == 'pull_request' && success() }}
       uses: peter-evans/create-or-update-comment@v2
       with:
         comment-id: ${{ steps.fc.outputs.comment-id }}
@@ -86,4 +96,16 @@ runs:
           <!-- See https://www.qrcode-monkey.com/qr-code-api-with-logo/ -->
           Open Preview site on 당근마켓. Scan a code with your device!
           <img src="https://api.qrcode-monkey.com/qr/custom?download=false&file=svg&data=${{ steps.encoded-karrot-deeplink-url.outputs.result }}&config=%7B%22logo%22%3A%22e57fa33bd90ef3e110ef7d6ca5e10f9139ef311b.png%22%7D" />
+        edit-mode: replace
+
+    - name: Upsert Result (Failure)
+      if: ${{ github.event_name == 'pull_request' && failure() }}
+      uses: peter-evans/create-or-update-comment@v2
+      with:
+        comment-id: ${{ steps.fc.outputs.comment-id }}
+        issue-number: ${{ github.event.pull_request.number }}
+        body: |
+          ## karrotmini deployment result
+
+          Preview Site 배포에 실패했어요 😢 ${{ steps.upload.outputs.failure-message }}
         edit-mode: replace
