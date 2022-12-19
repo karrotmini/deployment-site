@@ -63,6 +63,8 @@ runs:
 
         echo "site-url=$(echo $RESULT | jq -e --raw-output .site_url)" >> $GITHUB_OUTPUT
         echo "karrot-deeplink-url=$(echo $RESULT | jq -e --raw-output .karrot_deeplink_url)" >> $GITHUB_OUTPUT
+        echo "miniapp-id=$(echo $RESULT | jq -e --raw-output .miniapp.id)" >> $GITHUB_OUTPUT
+        echo "miniapp-name=$(echo $RESULT | jq -e --raw-output .miniapp.name)" >> $GITHUB_OUTPUT
       shell: bash
       env:
         ARCHIVE_FILE_PATH: ${{ steps.archive-file-path.outputs.result }}
@@ -80,7 +82,7 @@ runs:
       with:
         issue-number: ${{ github.event.pull_request.number }}
         comment-author: 'github-actions[bot]'
-        body-includes: karrotmini deployment result
+        body-includes: '[${{ steps.upload.outputs.miniapp-name }}] karrotmini deployment result'
 
     - name: Upsert Result (Success)
       if: ${{ github.event_name == 'pull_request' && success() }}
@@ -89,7 +91,7 @@ runs:
         comment-id: ${{ steps.fc.outputs.comment-id }}
         issue-number: ${{ github.event.pull_request.number }}
         body: |
-          ## karrotmini deployment result
+          ## [${{ steps.upload.outputs.miniapp-name }}] karrotmini deployment result
 
           Preview Site URL: ${{ steps.upload.outputs.site-url }}
 
